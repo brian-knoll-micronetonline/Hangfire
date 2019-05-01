@@ -15,6 +15,7 @@
 // License along with Hangfire. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Hangfire.Annotations;
@@ -824,18 +825,20 @@ namespace Hangfire
         /// If null, then <see cref="EnqueuedState"/> is used.</param>
         /// <param name="options">Continuation options. By default, 
         /// <see cref="JobContinuationOptions.OnlyOnSucceededState"/> is used.</param>
+        /// <param name="parameters">initial parameters passed by default in creationcontext</param>
         /// <returns>Unique identifier of a created job.</returns>
         public static string ContinueJobWith<T>(
             [NotNull] this IBackgroundJobClient client,
             [NotNull] string parentId,
             [NotNull, InstantHandle] Expression<Func<T, Task>> methodCall,
             [CanBeNull] IState nextState = null,
-            JobContinuationOptions options = JobContinuationOptions.OnlyOnSucceededState)
+            JobContinuationOptions options = JobContinuationOptions.OnlyOnSucceededState,
+            [CanBeNull] IDictionary<string, object> parameters = null)
         {
             if (client == null) throw new ArgumentNullException(nameof(client));
 
             var state = new AwaitingState(parentId, nextState ?? new EnqueuedState(), options);
-            return client.Create(Job.FromExpression(methodCall), state);
+            return client.Create(Job.FromExpression(methodCall), state, parameters);
         }
     }
 }
